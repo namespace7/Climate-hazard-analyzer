@@ -117,3 +117,36 @@ def test_weather_failure_returns_502(monkeypatch):
     )
 
     assert response.status_code == 502
+
+
+def test_rate_limit_returns_429(monkeypatch):
+    from config import rate_limiter as rate_limiter_module
+    from config.rate_limiter import InMemoryRateLimiter
+
+    # Use a fresh limiter with a very small limit for this test.
+    monkeypatch.setattr(
+        rate_limiter_module,
+        "rate_limiter",
+        InMemoryRateLimiter(limit=1, window_seconds=60),
+    )
+
+    # Avoid database and external weather calls.
+    monkeypatch.setattr(
+        main,
+        "get_cached_analysis",
+        lambda *args: {"cached": True},
+    )
+
+    params = {
+        "latitude": 26.12,
+        "longitude": 85.39,
+        "start_date": "2020-01-01",
+        "end_date": "2020-12-31",
+    }
+
+    first_response = client.get("/api/analyze", params=params)
+    second_response = client.get("/api/analyze", params=params)
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 429
+    assert "Retry-After" in second_response.headers

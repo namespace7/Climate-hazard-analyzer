@@ -1,12 +1,14 @@
 from datetime import date
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from pymongo.errors import PyMongoError
 from analyze_climate import analyze_climate
 from config.analysis_repository import (
     get_cached_analysis,
     save_analysis,
 )
+from config.rate_limiter import enforce_rate_limit
+
 
 app = FastAPI(
     title="Climate Hazard Analyzer",
@@ -20,7 +22,9 @@ def home():
         "message": "Climate Hazard Analyzer is running"
     }
 
-@app.get("/api/analyze")
+@app.get(
+    "/api/analyze",
+    dependencies=[Depends(enforce_rate_limit)],)
 def get_climate_analysis(
     latitude: float = Query(26.12, ge=-90, le=90),
     longitude: float = Query(85.39, ge=-180, le=180),
