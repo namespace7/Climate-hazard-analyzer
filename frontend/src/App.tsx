@@ -1,59 +1,91 @@
-import { useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import { useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 
 import {
-  Activity, CalendarDays, ChartNoAxesCombined, Flame, MapPin, RefreshCw, Search, Thermometer, TrendingDown,TrendingUp
-} from 'lucide-react'
+  Activity,
+  CalendarDays,
+  ChartNoAxesCombined,
+  Flame,
+  MapPin,
+  RefreshCw,
+  Search,
+  Thermometer,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import './App.css'
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import "./App.css";
 
 type AnnualStatistic = {
-  year: number,
-  event_count: number,
-  total_heatwave_days: number,
-  longest_event_days: number
-}
+  year: number;
+  event_count: number;
+  total_heatwave_days: number;
+  longest_event_days: number;
+};
 
 type HeatwaveEvent = {
-  start_date: string,
-  end_date: string,
-  duration: number
-}
+  start_date: string;
+  end_date: string;
+  duration: number;
+};
+
+type mann_kendall = {
+  s_statistic: number;
+  z_statistic: number;
+  kendall_tau: number;
+  p_value: number;
+  direction: string;
+  alpha: number;
+};
 
 type AnalysisResult = {
-  latitude: number
-  longitude: number
-  start_date: string
-  end_date: string
-  threshold_celsius: number
-  valid_temperature_records: number
-  heatwave_event_count: number
-  total_heatwave_days: number
-  annual_statistics: AnnualStatistic[]
+  latitude: number;
+  longitude: number;
+  start_date: string;
+  end_date: string;
+  threshold_celsius: number;
+  valid_temperature_records: number;
+  heatwave_event_count: number;
+  total_heatwave_days: number;
+  annual_statistics: AnnualStatistic[];
   trend: {
-    slope_days_per_year: number
-    direction: string
-    p_value: number
-    r_squared: number
-  }
-  events: HeatwaveEvent[]
-}
+    slope_days_per_year: number;
+    direction: string;
+    p_value: number;
+    r_squared: number;
+  };
+  mann_kendall: mann_kendall
+  events: HeatwaveEvent[];
+};
+
 
 
 function App() {
-  const [latitude, setLatitude] = useState('26.12')
-  const [longitude, setLongitude] = useState('85.39')
-  const [startDate, setStartDate] = useState('1990-01-01')
-  const [endDate, setEndDate] = useState('2020-12-31')
-  const [result, setResult] = useState<AnalysisResult | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [latitude, setLatitude] = useState("26.12");
+  const [longitude, setLongitude] = useState("85.39");
+  const [startDate, setStartDate] = useState("1990-01-01");
+  const [endDate, setEndDate] = useState("2020-12-31");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const [trendMethod, setTrendMethod] = useState<"regression" | "mann_kendall">(
+    "regression",
+  );
 
   async function runAnalysis(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError('')
-    setLoading(true)
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const params = new URLSearchParams({
@@ -61,36 +93,38 @@ function App() {
         longitude,
         start_date: startDate,
         end_date: endDate,
-      })
+      });
 
-      const response = await fetch(`/api/analyze?${params.toString()}`)
-      const data = await response.json()
+      const response = await fetch(`/api/analyze?${params.toString()}`);
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Unable to analyze climate data.')
+        throw new Error(data.detail || "Unable to analyze climate data.");
       }
 
-      setResult(data as AnalysisResult)
+      setResult(data as AnalysisResult);
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : 'Something went wrong while contacting the API.',
-      )
+          : "Something went wrong while contacting the API.",
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
-  const trend = result?.trend
-  const isIncreasing = trend?.direction === 'increasing'
-  const isDecreasing = trend?.direction === 'decreasing'
+  const trend = result?.trend;
+  const isIncreasing = trend?.direction === "increasing";
+  const isDecreasing = trend?.direction === "decreasing";
 
   return (
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="ClimateScope home">
-          <span className="brand-icon"><Activity size={22} /></span>
+          <span className="brand-icon">
+            <Activity size={22} />
+          </span>
           <span>ClimateScope</span>
         </a>
         <span className="live-status">
@@ -193,9 +227,13 @@ function App() {
 
             <button className="analyze-button" type="submit" disabled={loading}>
               {loading ? (
-                <><RefreshCw size={17} className="spin" /> Analyzing data...</>
+                <>
+                  <RefreshCw size={17} className="spin" /> Analyzing data...
+                </>
               ) : (
-                <><ChartNoAxesCombined size={17} /> Analyze climate</>
+                <>
+                  <ChartNoAxesCombined size={17} /> Analyze climate
+                </>
               )}
             </button>
           </form>
@@ -204,17 +242,19 @@ function App() {
         <div className="results-panel">
           {!result && !loading && !error && (
             <div className="welcome-panel">
-              <div className="welcome-icon"><Thermometer size={30} /></div>
+              <div className="welcome-icon">
+                <Thermometer size={30} />
+              </div>
               <h2>Your climate analysis starts here</h2>
               <p>
-                Choose a location and historical period, then run an analysis
-                to explore detected heatwaves and annual trends.
+                Choose a location and historical period, then run an analysis to
+                explore detected heatwaves and annual trends.
               </p>
               <button
                 className="secondary-button"
                 onClick={() => {
-                  const form = document.querySelector('form')
-                  form?.requestSubmit()
+                  const form = document.querySelector("form");
+                  form?.requestSubmit();
                 }}
               >
                 Run default analysis
@@ -226,7 +266,9 @@ function App() {
             <div className="loading-panel">
               <RefreshCw size={28} className="spin" />
               <h2>Analyzing historical climate data</h2>
-              <p>The first request may take a little while to retrieve records.</p>
+              <p>
+                The first request may take a little while to retrieve records.
+              </p>
             </div>
           )}
 
@@ -234,7 +276,7 @@ function App() {
             <div className="error-panel" role="alert">
               <strong>Analysis failed</strong>
               <p>{error}</p>
-              <button className="secondary-button" onClick={() => setError('')}>
+              <button className="secondary-button" onClick={() => setError("")}>
                 Dismiss
               </button>
             </div>
@@ -248,7 +290,7 @@ function App() {
                   <h2>Historical heatwave overview</h2>
                   <p className="results-caption">
                     {result.start_date} — {result.end_date}
-                    {' · '}
+                    {" · "}
                     {result.latitude}, {result.longitude}
                   </p>
                 </div>
@@ -286,7 +328,9 @@ function App() {
                 <div className="card-heading">
                   <div>
                     <h3>Annual heatwave days</h3>
-                    <p>Total days belonging to detected heatwave events per year</p>
+                    <p>
+                      Total days belonging to detected heatwave events per year
+                    </p>
                   </div>
                   <span className="chart-legend">
                     <span /> Heatwave days
@@ -312,7 +356,10 @@ function App() {
                           width={38}
                         />
                         <Tooltip
-                          formatter={(value) => [`${value} days`, 'Heatwave days']}
+                          formatter={(value) => [
+                            `${value} days`,
+                            "Heatwave days",
+                          ]}
                           labelFormatter={(label) => `Year ${label}`}
                         />
                         <Line
@@ -326,62 +373,164 @@ function App() {
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="empty-chart">No annual statistics available.</p>
+                    <p className="empty-chart">
+                      No annual statistics available.
+                    </p>
                   )}
                 </div>
               </section>
 
               <section className="content-card trend-card">
-                <div className="card-heading">
+                <div className="card-heading trend-card-heading">
                   <div>
-                    <h3>Long-term trend</h3>
-                    <p>Linear regression on annual heatwave days</p>
+                    <h3>Long-term trend analysis</h3>
+                    <p>
+                      Compare two statistical methods for annual heatwave days
+                    </p>
                   </div>
-                  {isIncreasing ? (
-                    <TrendingUp size={24} className="trend-up" />
-                  ) : isDecreasing ? (
-                    <TrendingDown size={24} className="trend-down" />
+                  {trendMethod === "regression" ? (
+                    isIncreasing ? (
+                      <TrendingUp size={24} className="trend-up" />
+                    ) : isDecreasing ? (
+                      <TrendingDown size={24} className="trend-down" />
+                    ) : (
+                      <Activity size={24} />
+                    )
                   ) : (
                     <Activity size={24} />
                   )}
                 </div>
 
-                <div className="trend-grid">
-                  <div>
-                    <span className="metric-label">Direction</span>
-                    <strong className="trend-value">
-                      {trend?.direction.replace('_', ' ') ?? 'Unavailable'}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="metric-label">Slope</span>
-                    <strong className="trend-value">
-                      {trend?.slope_days_per_year ?? '—'}
-                    </strong>
-                    <small>days / year</small>
-                  </div>
-                  <div>
-                    <span className="metric-label">P-value</span>
-                    <strong className="trend-value">{trend?.p_value ?? '—'}</strong>
-                  </div>
-                  <div>
-                    <span className="metric-label">R²</span>
-                    <strong className="trend-value">{trend?.r_squared ?? '—'}</strong>
-                  </div>
+                <div
+                  className="trend-toggle"
+                  role="group"
+                  aria-label="Select trend analysis method"
+                >
+                  <button
+                    type="button"
+                    className={`trend-toggle-button ${
+                      trendMethod === "regression" ? "active" : ""
+                    }`}
+                    aria-pressed={trendMethod === "regression"}
+                    onClick={() => setTrendMethod("regression")}
+                  >
+                    Linear Regression
+                  </button>
+                  <button
+                    type="button"
+                    className={`trend-toggle-button ${
+                      trendMethod === "mann_kendall" ? "active" : ""
+                    }`}
+                    aria-pressed={trendMethod === "mann_kendall"}
+                    onClick={() => setTrendMethod("mann_kendall")}
+                  >
+                    Mann–Kendall
+                  </button>
                 </div>
-                <p className="method-note">
-                  Trend direction alone does not establish statistical significance.
-                  Interpret the slope alongside the p-value and R².
-                </p>
+
+                {trendMethod === "regression" ? (
+                  <>
+                    <div className="trend-grid">
+                      <div>
+                        <span className="metric-label">Direction</span>
+                        <strong className="trend-value">
+                          {trend?.direction.replace("_", " ") ?? "Unavailable"}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="metric-label">Slope</span>
+                        <strong className="trend-value">
+                          {trend?.slope_days_per_year ?? "—"}
+                        </strong>
+                        <small>days / year</small>
+                      </div>
+                      <div>
+                        <span className="metric-label">P-value</span>
+                        <strong className="trend-value">
+                          {trend?.p_value ?? "—"}
+                        </strong>
+                        <small>
+                          {trend
+                            ? trend.p_value < 0.05
+                              ? "Statistically significant"
+                              : "Not significant at 0.05"
+                            : "Unavailable"}
+                        </small>
+                      </div>
+                      <div>
+                        <span className="metric-label">R²</span>
+                        <strong className="trend-value">
+                          {trend?.r_squared ?? "—"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <p className="method-note">
+                      Linear regression estimates the rate of change in annual
+                      heatwave days. Interpret the slope alongside the p-value
+                      and R².
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="trend-grid">
+                      <div>
+                        <span className="metric-label">Test conclusion</span>
+                        <strong className="trend-value">
+                          {result.mann_kendall.direction.replace(/_/g, " ")}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="metric-label">Kendall's tau</span>
+                        <strong className="trend-value">
+                          {result.mann_kendall.kendall_tau.toFixed(4)}
+                        </strong>
+                        <small>Monotonic association</small>
+                      </div>
+                      <div>
+                        <span className="metric-label">P-value</span>
+                        <strong className="trend-value">
+                          {result.mann_kendall.p_value.toFixed(4)}
+                        </strong>
+                        <small>
+                          {result.mann_kendall.p_value <
+                          result.mann_kendall.alpha
+                            ? "Statistically significant"
+                            : `Not significant at ${result.mann_kendall.alpha}`}
+                        </small>
+                      </div>
+                      <div>
+                        <span className="metric-label">Z statistic</span>
+                        <strong className="trend-value">
+                          {result.mann_kendall.z_statistic.toFixed(3)}
+                        </strong>
+                        <small>S: {result.mann_kendall.s_statistic}</small>
+                      </div>
+                    </div>
+
+                    <p className="method-note">
+                      The Mann–Kendall test checks for a monotonic trend without
+                      assuming a linear relationship. A p-value at or above the
+                      significance threshold means the test did not find
+                      sufficient evidence of a trend; it does not prove that no
+                      trend exists.
+                    </p>
+                  </>
+                )}
               </section>
 
               <section className="content-card events-card">
                 <div className="card-heading">
                   <div>
                     <h3>Detected heatwave events</h3>
-                    <p>Events are identified using the backend threshold and duration rule.</p>
+                    <p>
+                      Events are identified using the backend threshold and
+                      duration rule.
+                    </p>
                   </div>
-                  <span className="event-count">{result.events.length} events</span>
+                  <span className="event-count">
+                    {result.events.length} events
+                  </span>
                 </div>
 
                 <div className="table-wrapper">
@@ -398,7 +547,11 @@ function App() {
                         <tr key={`${item.start_date}-${index}`}>
                           <td>{item.start_date}</td>
                           <td>{item.end_date}</td>
-                          <td><span className="duration-pill">{item.duration} days</span></td>
+                          <td>
+                            <span className="duration-pill">
+                              {item.duration} days
+                            </span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -410,7 +563,9 @@ function App() {
                   </p>
                 )}
                 {result.events.length === 0 && (
-                  <p className="empty-chart">No heatwave events detected for this period.</p>
+                  <p className="empty-chart">
+                    No heatwave events detected for this period.
+                  </p>
                 )}
               </section>
             </>
@@ -423,7 +578,7 @@ function App() {
         <span>Historical data powered by Open-Meteo</span>
       </footer>
     </main>
-  )
+  );
 }
 
 function MetricCard({
@@ -432,10 +587,10 @@ function MetricCard({
   note,
   icon,
 }: {
-  label: string
-  value: string | number
-  note: string
-  icon: ReactNode
+  label: string;
+  value: string | number;
+  note: string;
+  icon: ReactNode;
 }) {
   return (
     <div className="metric-card">
@@ -446,7 +601,7 @@ function MetricCard({
       <strong className="metric-value">{value}</strong>
       <span className="metric-note">{note}</span>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

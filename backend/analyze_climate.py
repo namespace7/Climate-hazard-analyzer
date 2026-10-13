@@ -3,6 +3,7 @@ from climate_threshold import calculate_heatwave_threshold
 from heatwave import detect_heatwaves
 from datetime import date
 from climate_trend import calculate_heatwave_trend
+from climate_mann_kendall import calculate_mann_kendall_trend
 
 def summarise_events_by_year(events, start_date, end_date):
     """
@@ -93,6 +94,12 @@ def analyze_climate(latitude, longitude, start_date, end_date):
 
     trend = calculate_heatwave_trend(annual_statistics)
 
+    mann_kendall = calculate_mann_kendall_trend(
+    [
+        item["total_heatwave_days"]
+        for item in annual_statistics
+    ])
+
     return {
         "latitude": latitude,
         "longitude": longitude,
@@ -106,6 +113,7 @@ def analyze_climate(latitude, longitude, start_date, end_date):
         ),
         "annual_statistics": annual_statistics,
         "trend": trend,
+        "mann_kendall": mann_kendall,
         "events": events
     }
 

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from config.database import analysis_collection
 
-ANALYSIS_VERSION = 1
+ANALYSIS_VERSION = 2
 CACHE_TTL_HOURS = 24
 
 
