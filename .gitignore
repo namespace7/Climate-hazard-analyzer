@@ -1,10 +1,11 @@
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
 
-__pycache__/
-*.py[cod]
-.venv/
-.pytest_cache/
-.coverage
-htmlcov/
-
+# Operating system
 .DS_Store
+
+# Root-level test cache and editor settings
+.pytest_cache/
 .vscode/

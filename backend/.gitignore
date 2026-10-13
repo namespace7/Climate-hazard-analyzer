@@ -1,7 +1,11 @@
-
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
-.venv/
 .pytest_cache/
+
+# Virtual environments
+.venv/
+
+# Test coverage
 .coverage
-.env
+htmlcov/
