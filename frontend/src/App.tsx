@@ -152,9 +152,12 @@ type MapViewSyncProps = {
 function MapViewSync({ position }: MapViewSyncProps) {
   const map = useMap();
 
+  const latitude = position[0];
+  const longitude = position[1];
+
   useEffect(() => {
-    map.panTo(position);
-  }, [map, position[0], position[1]]);
+    map.panTo([latitude, longitude]);
+  }, [map, latitude, longitude]);
 
   return null;
 }
