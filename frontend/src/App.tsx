@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import {
@@ -25,6 +25,20 @@ import {
   YAxis,
 } from "recharts";
 import "./App.css";
+
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  useMap,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 type AnnualStatistic = {
   year: number;
@@ -106,9 +120,74 @@ function downloadCsv(
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// map section
+const climateMapMarker = new L.Icon({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+type MapClickHandlerProps = {
+  onSelect: (latitude: number, longitude: number) => void;
+};
+
+function MapClickHandler({ onSelect }: MapClickHandlerProps) {
+  useMapEvents({
+    click(event) {
+      onSelect(event.latlng.lat, event.latlng.lng);
+    },
+  });
+
+  return null;
+}
+
+type MapViewSyncProps = {
+  position: [number, number];
+};
+
+function MapViewSync({ position }: MapViewSyncProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.panTo(position);
+  }, [map, position[0], position[1]]);
+
+  return null;
+}
+
 function App() {
   const [latitude, setLatitude] = useState("26.12");
   const [longitude, setLongitude] = useState("85.39");
+
+  const parsedLatitude = Number(latitude);
+  const parsedLongitude = Number(longitude);
+
+  const isValidMapPosition =
+    latitude.trim() !== "" &&
+    longitude.trim() !== "" &&
+    Number.isFinite(parsedLatitude) &&
+    Number.isFinite(parsedLongitude) &&
+    parsedLatitude >= -90 &&
+    parsedLatitude <= 90 &&
+    parsedLongitude >= -180 &&
+    parsedLongitude <= 180;
+
+  const mapPosition: [number, number] = isValidMapPosition
+    ? [parsedLatitude, parsedLongitude]
+    : [26.12, 85.39];
+
+  const handleMapLocationSelect = (
+    selectedLatitude: number,
+    selectedLongitude: number,
+  ) => {
+    setLatitude(selectedLatitude.toFixed(4));
+    setLongitude(selectedLongitude.toFixed(4));
+  };
+
   const [startDate, setStartDate] = useState("1990-01-01");
   const [endDate, setEndDate] = useState("2020-12-31");
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -216,6 +295,42 @@ function App() {
             <div className="location-hint">
               <MapPin size={15} />
               <span>Default location: Muzaffarpur region</span>
+            </div>
+
+            <div className="location-map-section">
+              <div className="location-map-heading">
+                <div>
+                  <h3>Choose a location on the map</h3>
+                  <p>Click anywhere to select a climate analysis location.</p>
+                </div>
+                <MapPin size={20} aria-hidden="true" />
+              </div>
+
+              <div className="location-map">
+                <MapContainer
+                  center={[26.12, 85.39]}
+                  zoom={7}
+                  scrollWheelZoom={false}
+                  className="location-map-canvas"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+
+                  <MapClickHandler onSelect={handleMapLocationSelect} />
+
+                  <MapViewSync position={mapPosition} />
+
+                  <Marker position={mapPosition} icon={climateMapMarker} />
+                </MapContainer>
+              </div>
+
+              <p className="location-map-hint">
+                <MapPin size={14} aria-hidden="true" />
+                Selected coordinates: {mapPosition[0].toFixed(4)},{" "}
+                {mapPosition[1].toFixed(4)}
+              </p>
             </div>
 
             <div className="form-divider" />
