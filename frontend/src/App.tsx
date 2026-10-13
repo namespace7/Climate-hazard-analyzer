@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import {
@@ -15,15 +15,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import "./App.css";
 
 import {
@@ -36,16 +27,14 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+import type { AnnualStatistic } from "./components/AnnualHeatwaveChart";
+const AnnualHeatwaveChart = lazy(
+  () => import("./components/AnnualHeatwaveChart"),
+);
+
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-type AnnualStatistic = {
-  year: number;
-  event_count: number;
-  total_heatwave_days: number;
-  longest_event_days: number;
-};
 
 type HeatwaveEvent = {
   start_date: string;
@@ -570,45 +559,15 @@ function App() {
                 </div>
 
                 <div className="chart-container">
-                  {result.annual_statistics.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={result.annual_statistics}
-                        margin={{ top: 12, right: 16, left: 0, bottom: 8 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis
-                          dataKey="year"
-                          tick={{ fontSize: 11 }}
-                          minTickGap={28}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tick={{ fontSize: 11 }}
-                          width={38}
-                        />
-                        <Tooltip
-                          formatter={(value) => [
-                            `${value} days`,
-                            "Heatwave days",
-                          ]}
-                          labelFormatter={(label) => `Year ${label}`}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="total_heatwave_days"
-                          stroke="#e66b42"
-                          strokeWidth={2.5}
-                          dot={false}
-                          activeDot={{ r: 5 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <p className="empty-chart">
-                      No annual statistics available.
-                    </p>
-                  )}
+                  <Suspense
+                    fallback={
+                      <p className="empty-chart" role="status">
+                        Loading annual heatwave chart...
+                      </p>
+                    }
+                  >
+                    <AnnualHeatwaveChart data={result.annual_statistics} />
+                  </Suspense>
                 </div>
               </section>
 

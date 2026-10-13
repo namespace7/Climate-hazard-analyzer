@@ -13,7 +13,12 @@ A full-stack application for exploring historical heatwave events and annual tem
 - In-memory caching of historical weather responses.
 - MongoDB persistence and caching of completed analysis results.
 - FastAPI endpoints with input validation.
-- Automated Python tests for analysis, API behavior, and repository logic.
+- Automated Python tests for analysis, API behavior, repository logic, climate logic, API behavior, caching, and trend analysis.
+- Interactive Leaflet map for selecting geographic coordinates.
+- CSV exports for annual heatwave statistics and individual heatwave events.
+- Mann-Kendall non-parametric trend testing alongside linear regression.
+- API rate limiting and input validation.
+
 
 ## Architecture
 
@@ -34,7 +39,7 @@ React + TypeScript + Recharts
               v
       Climate analysis pipeline
        |       |       |
-    Threshold Events  Trend
+    Threshold Events Linear Regression Mann-Kendall
               |
               v
        MongoDB persistence
@@ -52,6 +57,8 @@ React + TypeScript + Recharts
 - Vite
 - Recharts
 - Lucide React
+- Leaflet
+- React Leaflet
 
 ### Backend
 
@@ -207,13 +214,106 @@ Annual summaries include:
 
 Years without detected events are represented with zero values.
 
-### Trend analysis
 
-Linear regression estimates the slope of annual heatwave days over time. The output includes the slope, direction, p-value, and R-squared.
+## Trend analysis
 
-A positive slope indicates an increasing fitted trend; it does not by itself establish causation or prove climate change.
+The application provides two complementary methods for analyzing annual
+heatwave days.
 
-**Methodology limitation:** the threshold is calculated from the selected analysis period rather than a fixed climatological baseline. Results from different periods may therefore not be directly comparable. This should be considered before interpreting the output as a scientific climate assessment.
+### Linear regression
+
+Linear regression estimates the relationship between year and annual
+heatwave days.
+
+The output includes:
+
+- Slope, expressed in heatwave days per year.
+- Estimated trend direction.
+- P-value.
+- R-squared (R²), measuring the proportion of variation explained by
+  the fitted linear relationship.
+
+A positive slope indicates an increasing fitted trend; a negative slope
+indicates a decreasing fitted trend. Statistical significance must be
+evaluated separately from the slope.
+
+### Mann-Kendall test
+
+The Mann-Kendall test evaluates whether observations exhibit a monotonic
+trend without assuming that the relationship with time is linear.
+
+The output includes:
+
+- Kendall's tau, indicating the direction and strength of the
+  monotonic association.
+- S statistic, based on pairwise comparisons of observations.
+- Z statistic, the standardized test statistic.
+- P-value and trend conclusion.
+
+The application uses a significance level of 0.05. A p-value below
+this threshold provides evidence against the null hypothesis of no
+monotonic trend, subject to the test's assumptions.
+
+A non-significant result means that the test did not find sufficient
+evidence of a trend. It does not prove that no trend exists.
+
+### Interpretation and limitations
+
+The methods may produce different p-values because they test different
+types of relationships.
+
+The current Mann-Kendall implementation uses a normal approximation
+with a continuity correction and tie-adjusted variance. Short time
+series and serial correlation can affect the reliability of the result.
+
+Neither method establishes causation.
+
+The application calculates its temperature threshold from the selected
+analysis period rather than a fixed climatological baseline. Results
+from different periods may therefore not be directly comparable.
+A fixed historical baseline and additional checks for serial correlation
+would improve the scientific robustness of the analysis.
+
+
+## Interactive map
+
+The frontend includes a Leaflet map using OpenStreetMap tiles.
+
+Users can select a location by clicking the map or enter latitude and
+longitude manually. The selected coordinates are displayed in the
+analysis form and are used when the user runs the analysis.
+
+The application validates coordinate ranges before submitting an
+analysis request. Map tiles require an internet connection.
+
+Map data and tiles are provided by OpenStreetMap contributors.
+
+## CSV exports
+
+The dashboard provides two CSV exports:
+
+1. Annual statistics, including annual heatwave summaries and trend-related
+   data available in the analysis response.
+2. Heatwave events, including the detected event details.
+
+The exports include location and analysis-period metadata. CSV fields are
+escaped, and formula-like values are guarded against spreadsheet formula
+injection.
+
+The exports represent the current analysis response; they do not independently
+recalculate the climate analysis.
+
+
+## AI tools used
+
+ChatGPT was used as a development assistant to help plan implementation
+steps, explain Python and statistical concepts, review error messages,
+suggest debugging approaches, and improve documentation.
+
+The implementation was tested locally using frontend lint/build checks
+and the Python test suite. The developer remains responsible for reviewing,
+understanding, and validating the submitted code.
+
 
 ## Caching and persistence
 
@@ -260,7 +360,7 @@ Both commands should complete successfully before submission.
 ## Current limitations
 
 - Heatwave is the currently implemented hazard type.
-- The dashboard accepts coordinates rather than a geographic search or map selector.
+- Location selection supports map clicks and manual latitude/longitude entry; city-name search and bounding-box region selection are not implemented.
 - The threshold is period-dependent.
 - The application is a prototype and has not been independently validated for scientific or public-safety decisions.
 - Production deployment and security hardening must be verified separately.
@@ -268,30 +368,4 @@ Both commands should complete successfully before submission.
 ## License
 
 Add the license required by your project or assignment before distributing the repository.
-```
 
-## 2. Protect your secrets
-
-From the project root, create or update `.gitignore`:
-
-<CodeBlock language="gitignore" editable>
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Secrets
-.env
-.env.*
-!.env.example
-
-# Frontend
-node_modules/
-dist/
-
-# OS and editor files
-.DS_Store
-.vscode/
