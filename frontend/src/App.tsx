@@ -5,6 +5,7 @@ import {
   Activity,
   CalendarDays,
   ChartNoAxesCombined,
+  Download,
   Flame,
   MapPin,
   RefreshCw,
@@ -63,11 +64,47 @@ type AnalysisResult = {
     p_value: number;
     r_squared: number;
   };
-  mann_kendall: mann_kendall
+  mann_kendall: mann_kendall;
   events: HeatwaveEvent[];
 };
 
+function escapeCsvCell(value: string | number): string {
+  let text = String(value);
 
+  // Prevent spreadsheet formula injection for text values.
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) {
+    text = `'${text}`;
+  }
+
+  // Escape embedded quotes and quote every CSV field.
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function downloadCsv(
+  filename: string,
+  headers: string[],
+  rows: (string | number)[][],
+): void {
+  const csv = [headers, ...rows]
+    .map((row) => row.map(escapeCsvCell).join(","))
+    .join("\r\n");
+
+  // Include a BOM to improve UTF-8 compatibility in spreadsheet apps.
+  const blob = new Blob(["\uFEFF", csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 function App() {
   const [latitude, setLatitude] = useState("26.12");
@@ -322,6 +359,83 @@ function App() {
                   note="Daily temperature records"
                   icon={<Activity size={19} />}
                 />
+              </div>
+
+              <div className="export-actions">
+                <div>
+                  <strong>Export analysis</strong>
+                  <p>Download the results for this location and period.</p>
+                </div>
+
+                <div className="export-buttons">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      downloadCsv(
+                        `annual-heatwave-statistics-${result.start_date}-to-${result.end_date}.csv`,
+                        [
+                          "latitude",
+                          "longitude",
+                          "start_date",
+                          "end_date",
+                          "threshold_celsius",
+                          "year",
+                          "event_count",
+                          "total_heatwave_days",
+                          "longest_event_days",
+                        ],
+                        result.annual_statistics.map((item) => [
+                          result.latitude,
+                          result.longitude,
+                          result.start_date,
+                          result.end_date,
+                          result.threshold_celsius,
+                          item.year,
+                          item.event_count,
+                          item.total_heatwave_days,
+                          item.longest_event_days,
+                        ]),
+                      )
+                    }
+                  >
+                    <Download size={16} />
+                    Annual statistics CSV
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      downloadCsv(
+                        `heatwave-events-${result.start_date}-to-${result.end_date}.csv`,
+                        [
+                          "latitude",
+                          "longitude",
+                          "start_date",
+                          "end_date",
+                          "threshold_celsius",
+                          "event_start_date",
+                          "event_end_date",
+                          "duration_days",
+                        ],
+                        result.events.map((item) => [
+                          result.latitude,
+                          result.longitude,
+                          result.start_date,
+                          result.end_date,
+                          result.threshold_celsius,
+                          item.start_date,
+                          item.end_date,
+                          item.duration,
+                        ]),
+                      )
+                    }
+                  >
+                    <Download size={16} />
+                    Heatwave events CSV
+                  </button>
+                </div>
               </div>
 
               <section className="content-card chart-card">

@@ -754,3 +754,53 @@ td {
     font-size: 11px;
   }
 }
+
+.export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 17px;
+  padding: 16px 18px;
+  border: 1px solid #e1e8e2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.export-actions strong {
+  color: #293c30;
+  font-size: 12px;
+}
+
+.export-actions p {
+  margin: 5px 0 0;
+  color: #879087;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.export-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.export-buttons .secondary-button {
+  min-height: 38px;
+  gap: 7px;
+}
+
+@media (max-width: 760px) {
+  .export-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .export-buttons {
+    flex-direction: column;
+  }
+
+  .export-buttons .secondary-button {
+    width: 100%;
+  }
+}
