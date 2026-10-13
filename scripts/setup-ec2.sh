@@ -2,13 +2,13 @@
 set -Eeuo pipefail
 umask 027
 
-APP_DIR="${APP_DIR:-$HOME/climate-hazard-analyzer}"
+APP_DIR="${APP_DIR:-/opt/climate-hazard-analyzer}"
 ENV_DIR="/etc/climate-hazard-analyzer"
 ENV_FILE="$ENV_DIR/backend.env"
 WEB_ROOT="/var/www/climate-hazard-analyzer"
 SERVICE_NAME="climate-hazard-analyzer"
-SERVICE_USER="$(id -un)"
-SERVICE_GROUP="$(id -gn)"
+SERVICE_USER="climatehazard"
+SERVICE_GROUP="climatehazard"
 
 log() { printf '[%s] %s\n' "$(date -Is)" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
@@ -174,6 +174,12 @@ server {
     }
 }
 NGINX
+
+if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+  sudo useradd --system --user-group \
+    --home-dir /var/lib/climate-hazard-analyzer \
+    --create-home --shell /sbin/nologin "$SERVICE_USER"
+fi
 
 log "Creating the FastAPI systemd unit..."
 SERVICE_TEMP="$(mktemp)"

@@ -3,7 +3,7 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 027
 
-APP_DIR="${APP_DIR:-$HOME/climate-hazard-analyzer}"
+APP_DIR="${APP_DIR:-/opt/climate-hazard-analyzer}"
 BRANCH="${BRANCH:-main}"
 BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_DIR="$APP_DIR/frontend"
