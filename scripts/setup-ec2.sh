@@ -152,7 +152,7 @@ sudo tee /etc/nginx/conf.d/climate-hazard-analyzer.conf >/dev/null <<'NGINX'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name _;
+    server_name climate-hazard-analyzer.invalid;
 
     root /var/www/climate-hazard-analyzer/current;
     index index.html;
