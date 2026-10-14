@@ -9,6 +9,7 @@ WEB_ROOT="/var/www/climate-hazard-analyzer"
 SERVICE_NAME="climate-hazard-analyzer"
 SERVICE_USER="climatehazard"
 SERVICE_GROUP="climatehazard"
+DEPLOY_USER="$(id -un)"
 
 log() { printf '[%s] %s\n' "$(date -Is)" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
@@ -180,6 +181,13 @@ if ! id "$SERVICE_USER" >/dev/null 2>&1; then
     --home-dir /var/lib/climate-hazard-analyzer \
     --create-home --shell /sbin/nologin "$SERVICE_USER"
 fi
+
+# Keep deployment ownership with the SSH user while allowing the API
+# account to read source files, virtualenv files, and traverse directories.
+log "Setting application source permissions..."
+sudo chown -R "$DEPLOY_USER:$SERVICE_GROUP" "$APP_DIR"
+sudo find "$APP_DIR" -type d -exec chmod g+s {} +
+sudo chmod -R g+rX "$APP_DIR"
 
 log "Creating the FastAPI systemd unit..."
 SERVICE_TEMP="$(mktemp)"
