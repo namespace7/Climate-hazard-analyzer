@@ -65,7 +65,8 @@ log "Installing base packages and runtime versions..."
 sudo dnf install -y \
   git rsync tar gzip openssl nginx \
   python3.11 python3.11-pip \
-  nodejs22 nodejs22-npm
+  nodejs22 nodejs22-npm \
+  certbot python3-certbot-nginx
 
 # Select Node 22 where versioned alternatives are available.
 if [[ -x /usr/bin/node-22 ]]; then
@@ -136,7 +137,6 @@ sudo install -d -o root -g root -m 700 "$ENV_DIR"
 sudo install -d -o root -g root -m 755 "$WEB_ROOT"
 sudo install -d -o root -g root -m 755 "$WEB_ROOT/releases"
 
-# Nginx should serve the active versioned release published by deploy-ec2.sh.
 # Disable the packaged default site if present, preserving a backup outside
 # the active *.conf include pattern.
 if [[ -f /etc/nginx/conf.d/default.conf ]]; then
@@ -148,10 +148,20 @@ if [[ -f /etc/nginx/conf.d/default.conf ]]; then
     /etc/nginx/conf.d/default.conf.disabled
 fi
 
-sudo tee /etc/nginx/conf.d/climate-hazard-analyzer.conf >/dev/null <<'NGINX'
+NGINX_CONFIG="/etc/nginx/conf.d/climate-hazard-analyzer.conf"
+
+# Certbot modifies this file when HTTPS is enabled. Preserve an existing
+# application config instead of overwriting certificate directives or redirects.
+# This script is for initial provisioning, not routine deployments.
+if sudo test -e "$NGINX_CONFIG"; then
+  log "Existing Nginx application config found; preserving $NGINX_CONFIG."
+else
+  sudo tee "$NGINX_CONFIG" >/dev/null <<'NGINX'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
+    # Placeholder prevents a duplicate wildcard server_name. Replace this
+    # with the deployment hostname before requesting a TLS certificate.
     server_name climate-hazard-analyzer.invalid;
 
     root /var/www/climate-hazard-analyzer/current;
@@ -170,6 +180,7 @@ server {
     }
 }
 NGINX
+fi
 
 if ! id "$SERVICE_USER" >/dev/null 2>&1; then
   sudo useradd --system --user-group \
