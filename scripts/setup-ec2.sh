@@ -110,8 +110,6 @@ fi
 sudo tee /etc/mongod.conf >/dev/null <<'MONGO'
 storage:
   dbPath: /var/lib/mongo
-  journal:
-    enabled: true
 systemLog:
   destination: file
   logAppend: true
