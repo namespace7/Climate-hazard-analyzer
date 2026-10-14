@@ -139,9 +139,14 @@ log "Installing backend dependencies..."
   -r "$BACKEND_DIR/requirements.txt"
 
 log "Running backend tests..."
+TEST_MONGODB_URI="$(sudo sed -n 's/^MONGODB_TEST_URI=//p' "$ENV_FILE" | head -n 1)"
+
+[[ -n "$TEST_MONGODB_URI" ]] ||
+  die "MONGODB_TEST_URI is missing from $ENV_FILE."
+
 (
   cd "$BACKEND_DIR"
-  MONGODB_URI="mongodb://127.0.0.1:27017" \
+  MONGODB_URI="$TEST_MONGODB_URI" \
   MONGODB_DATABASE="climate_hazard_analyzer_test" \
     "$VENV_PYTHON" -m pytest -q
 )
