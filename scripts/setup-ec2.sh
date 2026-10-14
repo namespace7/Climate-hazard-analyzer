@@ -71,9 +71,6 @@ sudo dnf install -y \
 if [[ -x /usr/bin/node-22 ]]; then
   sudo alternatives --set node /usr/bin/node-22
 fi
-if [[ -x /usr/bin/npm-22 ]]; then
-  sudo alternatives --set npm /usr/bin/npm-22
-fi
 
 PYTHON_VERSION="$(python3.11 --version)"
 NODE_VERSION="$(node --version)"
