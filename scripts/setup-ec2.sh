@@ -63,7 +63,7 @@ sudo swapon --show
 
 log "Installing base packages and runtime versions..."
 sudo dnf install -y \
-  git curl rsync tar gzip openssl nginx \
+  git rsync tar gzip openssl nginx \
   python3.11 python3.11-pip \
   nodejs22 nodejs22-npm
 
